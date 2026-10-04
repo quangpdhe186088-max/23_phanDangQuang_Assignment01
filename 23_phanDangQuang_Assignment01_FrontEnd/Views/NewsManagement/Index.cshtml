@@ -1,0 +1,107 @@
+@model NewsManagementViewModel
+@{ ViewData["Title"] = "Quản lý bài viết"; }
+<h1 class="h2">Quản lý bài viết</h1>
+<p class="text-muted">Tổng cộng @Model.Articles.TotalCount bài viết trong danh sách.</p>
+@if (TempData["Success"] is string success) { <p class="text-success" role="status">@success</p> }
+@if (TempData["Error"] is string error) { <p class="text-danger" role="alert">@error</p> }
+<div class="d-flex flex-wrap justify-content-between gap-3 my-4">
+    <form asp-action="Index" method="get" class="d-flex gap-2">
+        <input type="search" name="search" value="@Model.Search" class="form-control" placeholder="Tìm tiêu đề hoặc mô tả ngắn" aria-label="Tìm tiêu đề hoặc mô tả ngắn" />
+        <button class="btn btn-outline-primary text-nowrap" type="submit">Tìm kiếm</button>
+        @if (!string.IsNullOrEmpty(Model.Search)) { <a asp-action="Index" class="btn btn-outline-secondary text-nowrap">Xóa lọc</a> }
+    </form>
+    <a asp-action="Create" asp-route-page="@Model.Articles.Page" asp-route-search="@Model.Search" class="btn btn-primary">Thêm bài viết</a>
+</div>
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead><tr><th scope="col">Tiêu đề</th><th scope="col">Danh mục</th><th scope="col">Tag</th><th scope="col">Trạng thái</th><th scope="col">Người tạo</th><th scope="col">Ngày tạo (giờ VN)</th><th scope="col">Thao tác</th></tr></thead>
+        <tbody>
+        @foreach (var item in Model.Articles.Items) {
+            <tr><td>@item.NewsTitle</td><td>@item.CategoryName</td>
+                <td>@string.Join(", ", item.Tags.Select(t => t.TagName ?? $"#{t.TagId}"))</td>
+                <td>@(item.NewsStatus == true ? "Hoạt động" : "Không hoạt động")</td>
+                <td>@(item.CreatedByName ?? "Chưa xác định")</td><td>@NewsDisplay.LocalTime(item.CreatedDate)</td>
+                <td><div class="d-flex gap-2">
+                    <a asp-action="Details" asp-route-id="@item.NewsArticleId" class="btn btn-outline-secondary btn-sm">Xem</a>
+                    <a asp-action="Edit" asp-route-id="@item.NewsArticleId" asp-route-page="@Model.Articles.Page" asp-route-search="@Model.Search" class="btn btn-outline-primary btn-sm">Sửa</a>
+                    <form asp-action="Delete" method="post" class="m-0" onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này?');">
+                        <input type="hidden" name="id" value="@item.NewsArticleId" />
+                        <input type="hidden" name="page" value="@Model.Articles.Page" />
+                        <input type="hidden" name="search" value="@Model.Search" />
+                        <button class="btn btn-outline-danger btn-sm" type="submit">Xóa</button>
+                    </form>
+                </div></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+@if (Model.Articles.Items.Count == 0) { <p>Không tìm thấy bài viết phù hợp.</p> }
+<nav class="d-flex gap-3 align-items-center" aria-label="Phân trang bài viết">
+    @if (Model.Articles.HasPrevious) { <a asp-action="Index" asp-route-page="@(Model.Articles.Page - 1)" asp-route-search="@Model.Search">Trang trước</a> }
+    <span>Trang @Model.Articles.Page</span>
+    @if (Model.Articles.HasNext) { <a asp-action="Index" asp-route-page="@(Model.Articles.Page + 1)" asp-route-search="@Model.Search">Trang sau</a> }
+</nav>
+<div class="modal fade" id="news-modal" tabindex="-1" aria-labelledby="news-modal-title" aria-hidden="true" data-open="@(Model.ModalMode is not null ? "true" : "false")">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title fs-5" id="news-modal-title">@(Model.ModalMode == "Edit" ? "Sửa bài viết" : "Thêm bài viết")</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        </div>
+        <form asp-action="@(Model.ModalMode == "Edit" ? "Edit" : "Create")" method="post" class="d-flex flex-column overflow-hidden">
+            <div class="modal-body">
+                <input asp-for="Form.NewsArticleId" type="hidden" />
+                <input name="page" type="hidden" value="@Model.Articles.Page" />
+                <input name="search" type="hidden" value="@Model.Search" />
+                <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+                <div class="mb-3"><label asp-for="Form.NewsTitle" class="form-label"></label>
+                    <input asp-for="Form.NewsTitle" class="form-control" maxlength="400" />
+                    <span asp-validation-for="Form.NewsTitle" class="text-danger"></span></div>
+                <div class="mb-3"><label asp-for="Form.Headline" class="form-label"></label>
+                    <input asp-for="Form.Headline" class="form-control" maxlength="150" />
+                    <span asp-validation-for="Form.Headline" class="text-danger"></span></div>
+                <div class="mb-3"><label asp-for="Form.NewsContent" class="form-label"></label>
+                    <textarea asp-for="Form.NewsContent" class="form-control" maxlength="4000" rows="6"></textarea>
+                    <span asp-validation-for="Form.NewsContent" class="text-danger"></span></div>
+                <div class="mb-3"><label asp-for="Form.NewsSource" class="form-label"></label>
+                    <input asp-for="Form.NewsSource" class="form-control" maxlength="400" />
+                    <span asp-validation-for="Form.NewsSource" class="text-danger"></span></div>
+                <div class="mb-3"><label asp-for="Form.CategoryId" class="form-label"></label>
+                    <select asp-for="Form.CategoryId" class="form-select">
+                        <option value="">Chọn danh mục</option>
+                        @foreach (var category in Model.Options.Categories) {
+                            <option value="@category.CategoryId">@category.CategoryName@(category.IsActive == true ? "" : " (Không hoạt động)")</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Form.CategoryId" class="text-danger"></span></div>
+                <fieldset class="mb-3"><legend class="fs-6">Tag</legend>
+                    <div class="d-flex flex-wrap gap-3">
+                    @foreach (var tag in Model.Options.Tags) {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="Form.TagIds" value="@tag.TagId" id="news-tag-@tag.TagId" checked="@((Model.Form.TagIds ?? []).Contains(tag.TagId))" />
+                            <label class="form-check-label" for="news-tag-@tag.TagId">@(tag.TagName ?? $"#{tag.TagId}")</label>
+                        </div>
+                    }
+                    </div>
+                    @if (Model.Options.Tags.Count == 0) { <p class="text-muted">Chưa có tag. Bạn có thể thêm tại trang Tag.</p> }
+                </fieldset>
+                <div class="form-check mb-3"><input asp-for="Form.NewsStatus" class="form-check-input" />
+                    <label asp-for="Form.NewsStatus" class="form-check-label"></label></div>
+                <p class="form-text">Bài không hoạt động được lưu để tiếp tục chỉnh sửa và không hiển thị công khai.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+        </form>
+    </div></div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const newsModal = document.getElementById('news-modal');
+        if (newsModal.dataset.open === 'true') {
+            bootstrap.Modal.getOrCreateInstance(newsModal).show();
+        }
+    </script>
+}

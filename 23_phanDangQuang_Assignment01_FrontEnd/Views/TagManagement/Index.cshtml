@@ -1,0 +1,76 @@
+@model TagManagementViewModel
+@{ ViewData["Title"] = "Quản lý tag"; }
+<h1 class="h2">Quản lý tag</h1>
+<p class="text-muted">Tổng cộng @Model.Tags.TotalCount tag trong danh sách.</p>
+@if (TempData["Success"] is string success) { <p class="text-success" role="status">@success</p> }
+@if (TempData["Error"] is string error) { <p class="text-danger" role="alert">@error</p> }
+<div class="d-flex flex-wrap justify-content-between gap-3 my-4">
+    <form asp-action="Index" method="get" class="d-flex gap-2">
+        <input type="search" name="search" value="@Model.Search" class="form-control" placeholder="Tìm tên hoặc ghi chú" aria-label="Tìm tên hoặc ghi chú" />
+        <button class="btn btn-outline-primary text-nowrap" type="submit">Tìm kiếm</button>
+        @if (!string.IsNullOrEmpty(Model.Search)) { <a asp-action="Index" class="btn btn-outline-secondary text-nowrap">Xóa lọc</a> }
+    </form>
+    <a asp-action="Create" asp-route-page="@Model.Tags.Page" asp-route-search="@Model.Search" class="btn btn-primary">Thêm tag</a>
+</div>
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead><tr><th scope="col">Mã</th><th scope="col">Tên tag</th><th scope="col">Ghi chú</th><th scope="col">Thao tác</th></tr></thead>
+        <tbody>
+        @foreach (var item in Model.Tags.Items) {
+            <tr><td>@item.TagId</td><td>@item.TagName</td><td>@item.Note</td>
+                <td><div class="d-flex gap-2">
+
+                    <a asp-action="Edit" asp-route-id="@item.TagId" asp-route-page="@Model.Tags.Page" asp-route-search="@Model.Search" class="btn btn-outline-primary btn-sm">Sửa</a>
+                    <form asp-action="Delete" method="post" class="m-0" onsubmit="return confirm('Bạn có chắc muốn xóa tag này?');">
+                        <input type="hidden" name="id" value="@item.TagId" />
+                        <input type="hidden" name="page" value="@Model.Tags.Page" />
+                        <input type="hidden" name="search" value="@Model.Search" />
+                        <button class="btn btn-outline-danger btn-sm" type="submit">Xóa</button>
+                    </form>
+                </div></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+@if (Model.Tags.Items.Count == 0) { <p>Không tìm thấy tag phù hợp.</p> }
+<nav class="d-flex gap-3 align-items-center" aria-label="Phân trang tag">
+    @if (Model.Tags.HasPrevious) { <a asp-action="Index" asp-route-page="@(Model.Tags.Page - 1)" asp-route-search="@Model.Search">Trang trước</a> }
+    <span>Trang @Model.Tags.Page</span>
+    @if (Model.Tags.HasNext) { <a asp-action="Index" asp-route-page="@(Model.Tags.Page + 1)" asp-route-search="@Model.Search">Trang sau</a> }
+</nav>
+<div class="modal fade" id="tags-modal" tabindex="-1" aria-labelledby="tags-modal-title" aria-hidden="true" data-open="@(Model.ModalMode is not null ? "true" : "false")">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title fs-5" id="tags-modal-title">@(Model.ModalMode == "Edit" ? "Sửa tag" : "Thêm tag")</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        </div>
+        <form asp-action="@(Model.ModalMode == "Edit" ? "Edit" : "Create")" method="post">
+            <div class="modal-body">
+                <input asp-for="Form.TagId" type="hidden" />
+                <input name="page" type="hidden" value="@Model.Tags.Page" />
+                <input name="search" type="hidden" value="@Model.Search" />
+                <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+                <div class="mb-3"><label asp-for="Form.TagName" class="form-label"></label>
+                    <input asp-for="Form.TagName" class="form-control" maxlength="50" />
+                    <span asp-validation-for="Form.TagName" class="text-danger"></span></div>
+                <div class="mb-3"><label asp-for="Form.Note" class="form-label"></label>
+                    <textarea asp-for="Form.Note" class="form-control" maxlength="400" rows="3"></textarea>
+                    <span asp-validation-for="Form.Note" class="text-danger"></span></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+        </form>
+    </div></div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const tagsModal = document.getElementById('tags-modal');
+        if (tagsModal.dataset.open === 'true') {
+            bootstrap.Modal.getOrCreateInstance(tagsModal).show();
+        }
+    </script>
+}

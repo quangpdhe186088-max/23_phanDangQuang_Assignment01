@@ -1,0 +1,50 @@
+@model NewsReportViewModel
+@{ ViewData["Title"] = "Báo cáo bài viết"; }
+<h1 class="h2">Báo cáo bài viết</h1>
+<p class="text-muted">Lọc theo ngày tạo, gồm bài hoạt động và không hoạt động của tất cả tài khoản. Bài mới nhất hiển thị trước.</p>
+<form asp-action="Index" method="get" class="my-4">
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    <div class="row g-3 align-items-end">
+        <div class="col-sm-4">
+            <label asp-for="StartDate" class="form-label"></label>
+            <input asp-for="StartDate" asp-format="{0:yyyy-MM-dd}" type="date" min="1753-01-01" required class="form-control" />
+        </div>
+        <div class="col-sm-4">
+            <label asp-for="EndDate" class="form-label"></label>
+            <input asp-for="EndDate" asp-format="{0:yyyy-MM-dd}" type="date" min="1753-01-01" required class="form-control" />
+        </div>
+        <div class="col-sm-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Xem báo cáo</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a>
+        </div>
+    </div>
+    <p class="form-text">Khoảng ngày tính theo giờ Việt Nam (UTC+7), bao gồm toàn bộ ngày kết thúc.</p>
+</form>
+@if (Model.HasResults) {
+    <p role="status">Từ <strong>@Model.StartDate?.ToString("dd/MM/yyyy")</strong> đến <strong>@Model.EndDate?.ToString("dd/MM/yyyy")</strong>: tổng cộng <strong>@Model.Articles.TotalCount</strong> bài viết.</p>
+    @if (Model.Articles.Items.Count == 0) {
+        <p>@(Model.Articles.TotalCount == 0 ? "Không có bài viết trong khoảng ngày này." : "Không có bài viết trong trang báo cáo này.")</p>
+    } else {
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead><tr><th scope="col">Mã bài</th><th scope="col">Tiêu đề</th><th scope="col">Danh mục</th><th scope="col">Người tạo</th><th scope="col">Ngày tạo</th><th scope="col">Trạng thái</th></tr></thead>
+                <tbody>
+                @foreach (var article in Model.Articles.Items) {
+                    <tr><td>@article.NewsArticleId</td><td>@article.NewsTitle</td><td>@(article.CategoryName ?? "—")</td>
+                        <td>@(article.CreatedByName ?? "—")</td><td>@NewsDisplay.LocalTime(article.CreatedDate)</td>
+                        <td>@(article.NewsStatus switch { true => "Hoạt động", false => "Không hoạt động", _ => "Chưa xác định" })</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    @if (Model.Articles.TotalCount > 0) {
+        <nav class="d-flex gap-3 align-items-center" aria-label="Phân trang báo cáo">
+            @if (Model.Articles.HasPrevious) { <a asp-action="Index" asp-route-page="@(Model.Articles.Page - 1)" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">Trang trước</a> }
+            <span>Trang @Model.Articles.Page</span>
+            @if (Model.Articles.HasNext) { <a asp-action="Index" asp-route-page="@(Model.Articles.Page + 1)" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">Trang sau</a> }
+        </nav>
+    }
+} else if (ViewData.ModelState.IsValid) {
+    <p>Chọn khoảng ngày và bấm Xem báo cáo.</p>
+}

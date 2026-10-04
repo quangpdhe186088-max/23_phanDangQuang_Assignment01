@@ -1,0 +1,68 @@
+@model AccountProfileViewModel
+@{ ViewData["Title"] = "Thông tin tài khoản"; var user = Model.User; }
+<h1 class="h2 mb-4">Thông tin tài khoản</h1>
+<dl class="row">
+    <dt class="col-sm-3">Họ tên</dt><dd class="col-sm-9">@user.Name</dd>
+    <dt class="col-sm-3">Email</dt><dd class="col-sm-9">@user.Email</dd>
+    <dt class="col-sm-3">Vai trò</dt><dd class="col-sm-9">@(user.Role switch {
+        AppRoles.Admin => "Quản trị viên",
+        AppRoles.Staff => "Nhân viên",
+        AppRoles.Lecturer => "Giảng viên",
+        _ => "Chưa xác định"
+    })</dd>
+    @if (user.AccountId.HasValue) {
+        <dt class="col-sm-3">Mã tài khoản</dt><dd class="col-sm-9">@user.AccountId</dd>
+    }
+</dl>
+@if (User.IsInRole(AppRoles.Staff)) {
+    <div class="d-flex gap-2 mb-4">
+        <a asp-action="Edit" class="btn btn-primary">Sửa hồ sơ</a>
+        <a asp-action="History" class="btn btn-outline-secondary">Bài viết của tôi</a>
+    </div>
+    <div class="modal fade" id="profile-modal" tabindex="-1" aria-labelledby="profile-modal-title" aria-hidden="true" data-open="@(Model.OpenEdit ? "true" : "false")">
+        <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="profile-modal-title">Sửa hồ sơ</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <form asp-action="Edit" method="post" class="d-flex flex-column overflow-hidden">
+                <div class="modal-body">
+                    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+                    <div class="mb-3"><label asp-for="Form.AccountName" class="form-label"></label>
+                        <input asp-for="Form.AccountName" class="form-control" maxlength="100" autocomplete="name" />
+                        <span asp-validation-for="Form.AccountName" class="text-danger"></span></div>
+                    <div class="mb-3"><label asp-for="Form.AccountEmail" class="form-label"></label>
+                        <input asp-for="Form.AccountEmail" class="form-control" maxlength="70" autocomplete="username" />
+                        <span asp-validation-for="Form.AccountEmail" class="text-danger"></span></div>
+                    <p class="form-text">Bỏ trống phần mật khẩu nếu chỉ sửa họ tên hoặc email.</p>
+                    <div class="mb-3"><label asp-for="Form.CurrentPassword" class="form-label"></label>
+                        <input asp-for="Form.CurrentPassword" class="form-control" maxlength="70" autocomplete="current-password" />
+                        <span asp-validation-for="Form.CurrentPassword" class="text-danger"></span></div>
+                    <div class="mb-3"><label asp-for="Form.NewPassword" class="form-label"></label>
+                        <input asp-for="Form.NewPassword" class="form-control" maxlength="70" autocomplete="new-password" />
+                        <span asp-validation-for="Form.NewPassword" class="text-danger"></span></div>
+                    <div class="mb-3"><label asp-for="Form.ConfirmPassword" class="form-label"></label>
+                        <input asp-for="Form.ConfirmPassword" class="form-control" maxlength="70" autocomplete="new-password" />
+                        <span asp-validation-for="Form.ConfirmPassword" class="text-danger"></span></div>
+                    <p class="form-text">Sau khi lưu thành công, bạn cần đăng nhập lại bằng thông tin mới.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu hồ sơ</button>
+                </div>
+            </form>
+        </div></div>
+    </div>
+}
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const profileModal = document.getElementById('profile-modal');
+        if (profileModal?.dataset.open === 'true') {
+            bootstrap.Modal.getOrCreateInstance(profileModal).show();
+        }
+    </script>
+}
+@if (User.IsInRole(AppRoles.Lecturer)) {
+    <a asp-action="History" class="btn btn-outline-secondary mb-4">Bài viết của tôi</a>
+}

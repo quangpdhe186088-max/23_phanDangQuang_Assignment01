@@ -1,0 +1,48 @@
+@model NewsHistoryViewModel
+@{ ViewData["Title"] = "Bài viết của tôi"; }
+<h1 class="h2">Bài viết của tôi</h1>
+<p class="text-muted">Các bài viết do bạn tạo, bao gồm bài đang hoạt động và không hoạt động.</p>
+@if (TempData["Success"] is string success) { <p class="text-success" role="status">@success</p> }
+@if (TempData["Error"] is string error) { <p class="text-danger" role="alert">@error</p> }
+<form asp-action="History" method="get" class="d-flex gap-2 my-4">
+    <input type="search" name="search" value="@Model.Search" class="form-control" placeholder="Tìm tiêu đề hoặc mô tả ngắn" aria-label="Tìm tiêu đề hoặc mô tả ngắn" />
+    <button class="btn btn-outline-primary text-nowrap" type="submit">Tìm kiếm</button>
+    @if (!string.IsNullOrEmpty(Model.Search)) { <a asp-action="History" class="btn btn-outline-secondary text-nowrap">Hiển thị tất cả</a> }
+</form>
+@if (string.IsNullOrEmpty(Model.Search)) {
+    <p>Tổng cộng @Model.Articles.Count bài viết trong danh sách.</p>
+} else {
+    <p>Tìm thấy @Model.Articles.Count bài viết khớp với từ khóa.</p>
+}
+@if (Model.Articles.Count == 0) {
+    <p>@(string.IsNullOrEmpty(Model.Search) ? "Bạn chưa tạo bài viết nào." : "Không tìm thấy bài viết khớp với từ khóa.")</p>
+} else {
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th scope="col">Tiêu đề</th><th scope="col">Danh mục</th><th scope="col">Trạng thái</th><th scope="col">Ngày tạo (giờ VN)</th><th scope="col">Thao tác</th></tr></thead>
+            <tbody>
+            @foreach (var article in Model.Articles) {
+                <tr><td>@article.NewsTitle</td><td>@article.CategoryName</td>
+                    <td>@(article.NewsStatus == true ? "Hoạt động" : "Không hoạt động")</td>
+                    <td>@NewsDisplay.LocalTime(article.CreatedDate)</td>
+                    <td>
+                        @if (User.IsInRole(AppRoles.Lecturer)) {
+                            <div class="d-flex gap-2">
+                                <a asp-controller="MyNews" asp-action="Details" asp-route-id="@article.NewsArticleId" asp-route-search="@Model.Search" class="btn btn-outline-secondary btn-sm">Xem</a>
+                                <a asp-controller="MyNews" asp-action="Edit" asp-route-id="@article.NewsArticleId" asp-route-search="@Model.Search" class="btn btn-outline-primary btn-sm">Sửa</a>
+                                <form asp-controller="MyNews" asp-action="Delete" method="post" class="m-0" onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này?');">
+                                    <input type="hidden" name="id" value="@article.NewsArticleId" />
+                                    <input type="hidden" name="search" value="@Model.Search" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Xóa</button>
+                                </form>
+                            </div>
+                        } else {
+                            <a asp-controller="NewsManagement" asp-action="Details" asp-route-id="@article.NewsArticleId" class="btn btn-outline-secondary btn-sm">Xem</a>
+                        }
+                    </td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+<a asp-action="Index" class="btn btn-outline-secondary mb-4">Về thông tin tài khoản</a>

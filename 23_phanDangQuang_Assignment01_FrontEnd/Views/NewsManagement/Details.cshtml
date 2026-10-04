@@ -1,0 +1,21 @@
+@model NewsManagementDto
+@{ ViewData["Title"] = Model.NewsTitle ?? "Chi tiết bài viết"; }
+<article>
+    <h1 class="h2">@Model.NewsTitle</h1>
+    <p class="lead">@Model.Headline</p>
+    <dl class="row">
+        <dt class="col-sm-3">Danh mục</dt><dd class="col-sm-9">@(Model.CategoryName ?? "Chưa xác định")</dd>
+        <dt class="col-sm-3">Trạng thái</dt><dd class="col-sm-9">@(Model.NewsStatus == true ? "Hoạt động" : "Không hoạt động")</dd>
+        <dt class="col-sm-3">Người tạo</dt><dd class="col-sm-9">@(Model.CreatedByName ?? "Chưa xác định")</dd>
+        <dt class="col-sm-3">Ngày tạo (giờ VN)</dt><dd class="col-sm-9">@NewsDisplay.LocalTime(Model.CreatedDate)</dd>
+        <dt class="col-sm-3">Người sửa gần nhất</dt><dd class="col-sm-9">@(Model.UpdatedByName ?? "Chưa có")</dd>
+        <dt class="col-sm-3">Ngày sửa (giờ VN)</dt><dd class="col-sm-9">@NewsDisplay.LocalTime(Model.ModifiedDate)</dd>
+        <dt class="col-sm-3">Tag</dt><dd class="col-sm-9">@string.Join(", ", Model.Tags.Select(t => t.TagName ?? $"#{t.TagId}"))</dd>
+        <dt class="col-sm-3">Nguồn tin</dt><dd class="col-sm-9">@(Model.NewsSource ?? "—")</dd>
+    </dl>
+    <div class="my-4" style="white-space: pre-wrap; overflow-wrap: anywhere;">@Model.NewsContent</div>
+</article>
+<div class="d-flex gap-2 mb-4">
+    <a asp-controller="@(User.IsInRole(AppRoles.Lecturer) ? "Account" : "NewsManagement")" asp-action="@(User.IsInRole(AppRoles.Lecturer) ? "History" : "Index")" asp-route-search="@ViewData["Search"]" class="btn btn-outline-secondary">Về danh sách</a>
+    <a asp-controller="@(User.IsInRole(AppRoles.Lecturer) ? "MyNews" : "NewsManagement")" asp-action="Edit" asp-route-id="@Model.NewsArticleId" asp-route-search="@ViewData["Search"]" class="btn btn-primary">Sửa bài viết</a>
+</div>

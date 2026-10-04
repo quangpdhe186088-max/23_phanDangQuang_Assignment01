@@ -1,0 +1,29 @@
+@model PagedList<NewsArticleDto>
+@{ ViewData["Title"] = "Tin tức"; }
+<section class="py-3 mb-3">
+    <h1>Tin tức nhà trường</h1>
+    <p class="text-muted">Tin tức và thông tin dành cho cộng đồng nhà trường.</p>
+</section>
+@if (Model.Items.Count == 0) {
+    <p>Chưa có bài viết trên trang này.</p>
+} else {
+    <div class="row g-4 mb-4">
+        @foreach (var article in Model.Items) {
+            <div class="col-md-6">
+                <article class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <p class="small text-muted mb-2">@(article.CategoryName ?? "Chưa phân loại") · @NewsDisplay.LocalTime(article.CreatedDate)</p>
+                        <h2 class="h4" style="overflow-wrap: anywhere;"><a asp-action="Details" asp-route-id="@article.NewsArticleId" class="text-decoration-none">@(article.NewsTitle ?? "Bài viết")</a></h2>
+                        <p style="overflow-wrap: anywhere;">@article.Headline</p>
+                        <a asp-action="Details" asp-route-id="@article.NewsArticleId" class="mt-auto align-self-start">Đọc tiếp</a>
+                    </div>
+                </article>
+            </div>
+        }
+    </div>
+}
+<nav class="d-flex gap-3 align-items-center mb-4" aria-label="Phân trang tin tức">
+    @if (Model.HasPrevious) { <a asp-action="Index" asp-route-page="@(Model.Page - 1)">Trang trước</a> }
+    <span>Trang @Model.Page · @Model.TotalCount bài viết</span>
+    @if (Model.HasNext) { <a asp-action="Index" asp-route-page="@(Model.Page + 1)">Trang sau</a> }
+</nav>

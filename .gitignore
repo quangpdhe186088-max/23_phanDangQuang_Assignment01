@@ -1,0 +1,25 @@
+# Visual Studio and build outputs
+.vs/
+**/bin/
+**/obj/
+*.user
+*.suo
+*.slnLaunch.user
+
+# Test results and runtime logs
+TestResults/
+**/TestResults/
+*.log
+
+# Local secrets and database files
+appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
+.env
+.env.*
+*.pfx
+*.p12
+*.key
+*.mdf
+*.ldf
+*.bak

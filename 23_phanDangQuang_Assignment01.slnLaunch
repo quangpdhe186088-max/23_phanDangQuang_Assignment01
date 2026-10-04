@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Frontend + Backend",
+    "Projects": [
+      {
+        "Path": "23_phanDangQuang_Assignment01_BackEnd\\23_phanDangQuang_Assignment01_BackEnd.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      },
+      {
+        "Path": "23_phanDangQuang_Assignment01_FrontEnd\\23_phanDangQuang_Assignment01_FrontEnd.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      }
+    ]
+  }
+]

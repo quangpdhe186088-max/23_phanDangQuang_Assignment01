@@ -1,0 +1,6 @@
+@_23_phanDangQuang_Assignment01_FrontEnd_HostAddress = http://localhost:5259
+
+GET {{_23_phanDangQuang_Assignment01_FrontEnd_HostAddress}}/
+Accept: text/html
+
+###

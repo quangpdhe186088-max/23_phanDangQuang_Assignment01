@@ -1,0 +1,62 @@
+@_23_phanDangQuang_Assignment01_BackEnd_HostAddress = http://localhost:5278
+@accessToken = paste-access-token-from-login-response
+@staffEmail = staff-email-from-your-database
+@staffPassword = staff-password-from-your-database
+
+### Admin login (configured in Backend appsettings.json)
+POST {{_23_phanDangQuang_Assignment01_BackEnd_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@FUNewsManagementSystem.org",
+  "password": "@@abc123@@"
+}
+
+### Staff login (replace the variables above with an existing Staff account)
+POST {{_23_phanDangQuang_Assignment01_BackEnd_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{staffEmail}}",
+  "password": "{{staffPassword}}"
+}
+
+### Current identity (paste accessToken above; Admin, Staff or Lecturer)
+GET {{_23_phanDangQuang_Assignment01_BackEnd_HostAddress}}/api/auth/me
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+### Accounts (Admin: 200; Staff: 403; no token: 401)
+GET {{_23_phanDangQuang_Assignment01_BackEnd_HostAddress}}/odata/Accounts?$count=true
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+### Categories (Staff: 200; Admin: 403; no token: 401)
+GET {{_23_phanDangQuang_Assignment01_BackEnd_HostAddress}}/odata/Categories?$count=true
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+### Tags (Staff only)
+GET {{_23_phanDangQuang_Assignment01_BackEnd_HostAddress}}/odata/Tags
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+### Published news (no login needed)
+
+GET {{_23_phanDangQuang_Assignment01_BackEnd_HostAddress}}/odata/NewsArticles?$count=true
+Accept: application/json
+
+###
+
+GET {{_23_phanDangQuang_Assignment01_BackEnd_HostAddress}}/odata/NewsArticles?$filter=contains(NewsTitle,'a')&$orderby=CreatedDate desc&$select=NewsArticleId,NewsTitle,CreatedDate&$top=5
+Accept: application/json
+
+###
+
+GET {{_23_phanDangQuang_Assignment01_BackEnd_HostAddress}}/odata/NewsArticles?$skip=2&$top=2&$count=true
+Accept: application/json
+
+###
+
+GET {{_23_phanDangQuang_Assignment01_BackEnd_HostAddress}}/odata/$metadata
+Accept: application/xml

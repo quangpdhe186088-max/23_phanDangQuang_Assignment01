@@ -1,0 +1,86 @@
+@model AccountManagementViewModel
+@{ ViewData["Title"] = "Quản lý tài khoản"; }
+<h1 class="h2">Quản lý tài khoản</h1>
+<p class="text-muted">Tổng cộng @Model.Accounts.TotalCount tài khoản trong danh sách. Hệ thống có @Model.AdminSummary.TotalAdmins Admin.</p>
+@if (Model.AdminSummary.ConfiguredAdminEnabled) {
+    <p>Admin mặc định: <strong>@Model.AdminSummary.ConfiguredAdminEmail</strong> (được quản lý trong cấu hình).</p>
+}
+@if (TempData["Success"] is string success) { <p class="text-success" role="status">@success</p> }
+@if (TempData["Error"] is string error) { <p class="text-danger" role="alert">@error</p> }
+<div class="d-flex flex-wrap justify-content-between gap-3 my-4">
+    <form asp-action="Index" method="get" class="d-flex gap-2">
+        <input type="search" name="search" value="@Model.Search" class="form-control" placeholder="Tìm tên hoặc email" aria-label="Tìm tên hoặc email" />
+        <button class="btn btn-outline-primary text-nowrap" type="submit">Tìm kiếm</button>
+        @if (!string.IsNullOrEmpty(Model.Search)) { <a asp-action="Index" class="btn btn-outline-secondary text-nowrap">Xóa lọc</a> }
+    </form>
+    <a asp-action="Create" asp-route-page="@Model.Accounts.Page" asp-route-search="@Model.Search" class="btn btn-primary">Thêm tài khoản</a>
+</div>
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead><tr><th scope="col">Mã</th><th scope="col">Họ tên</th><th scope="col">Email</th><th scope="col">Vai trò</th><th scope="col">Thao tác</th></tr></thead>
+        <tbody>
+        @foreach (var account in Model.Accounts.Items) {
+            <tr><td>@account.AccountId</td><td>@account.AccountName</td><td>@account.AccountEmail</td>
+                <td>@(account.AccountRole switch { 0 => "Admin", 1 => "Nhân viên", 2 => "Giảng viên", _ => "Chưa xác định" })</td>
+                <td><div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@account.AccountId" asp-route-page="@Model.Accounts.Page" asp-route-search="@Model.Search" class="btn btn-outline-primary btn-sm">Sửa</a>
+                    <form asp-action="Delete" method="post" class="m-0" onsubmit="return confirm('Bạn có chắc muốn xóa tài khoản này?');">
+                        <input type="hidden" name="id" value="@account.AccountId" />
+                        <input type="hidden" name="page" value="@Model.Accounts.Page" />
+                        <input type="hidden" name="search" value="@Model.Search" />
+                        <button class="btn btn-outline-danger btn-sm" type="submit" disabled="@(account.AccountRole == 0 && Model.AdminSummary.TotalAdmins <= 1)">Xóa</button>
+                    </form>
+                </div></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+@if (Model.Accounts.Items.Count == 0) { <p>Không tìm thấy tài khoản phù hợp.</p> }
+<nav class="d-flex gap-3 align-items-center" aria-label="Phân trang tài khoản">
+    @if (Model.Accounts.HasPrevious) { <a asp-action="Index" asp-route-page="@(Model.Accounts.Page - 1)" asp-route-search="@Model.Search">Trang trước</a> }
+    <span>Trang @Model.Accounts.Page</span>
+    @if (Model.Accounts.HasNext) { <a asp-action="Index" asp-route-page="@(Model.Accounts.Page + 1)" asp-route-search="@Model.Search">Trang sau</a> }
+</nav>
+<div class="modal fade" id="account-modal" tabindex="-1" aria-labelledby="account-modal-title" aria-hidden="true" data-open="@(Model.ModalMode is not null ? "true" : "false")">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title fs-5" id="account-modal-title">@(Model.ModalMode == "Edit" ? "Sửa tài khoản" : "Thêm tài khoản")</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        </div>
+        <form asp-action="@(Model.ModalMode == "Edit" ? "Edit" : "Create")" method="post">
+            <div class="modal-body">
+                <input asp-for="Form.AccountId" type="hidden" />
+                <input name="page" type="hidden" value="@Model.Accounts.Page" />
+                <input name="search" type="hidden" value="@Model.Search" />
+                <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+                <div class="mb-3"><label asp-for="Form.AccountName" class="form-label"></label>
+                    <input asp-for="Form.AccountName" class="form-control" maxlength="100" />
+                    <span asp-validation-for="Form.AccountName" class="text-danger"></span></div>
+                <div class="mb-3"><label asp-for="Form.AccountEmail" class="form-label"></label>
+                    <input asp-for="Form.AccountEmail" class="form-control" maxlength="70" />
+                    <span asp-validation-for="Form.AccountEmail" class="text-danger"></span></div>
+                <div class="mb-3"><label asp-for="Form.AccountRole" class="form-label"></label>
+                    <select asp-for="Form.AccountRole" class="form-select"><option value="0">Admin</option><option value="1">Nhân viên</option><option value="2">Giảng viên</option></select>
+                    <span asp-validation-for="Form.AccountRole" class="text-danger"></span></div>
+                <div class="mb-3"><label asp-for="Form.AccountPassword" class="form-label">@(Model.ModalMode == "Edit" ? "Mật khẩu mới" : "Mật khẩu")</label>
+                    <input asp-for="Form.AccountPassword" class="form-control" maxlength="70" autocomplete="new-password" />
+                    @if (Model.ModalMode == "Edit") { <p class="form-text">Để trống để giữ mật khẩu hiện tại.</p> }
+                    <span asp-validation-for="Form.AccountPassword" class="text-danger"></span></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+        </form>
+    </div></div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const accountModal = document.getElementById('account-modal');
+        if (accountModal.dataset.open === 'true') {
+            bootstrap.Modal.getOrCreateInstance(accountModal).show();
+        }
+    </script>
+}
